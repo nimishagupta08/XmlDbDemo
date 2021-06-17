@@ -17,7 +17,7 @@ namespace XmlDbDemo
         {
             Random random = new Random();
             List<EmployeeDetail> employeeList = new List<EmployeeDetail>();
-            for (int i = 1; i < 10; i++)
+            for (int i = 1; i < 10000; i++)
             {
 
                 EmployeeDetail employeeDetail = new EmployeeDetail();
