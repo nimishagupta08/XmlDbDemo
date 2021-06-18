@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -12,37 +11,64 @@ namespace XmlDbDemo
     class Program
     {
         public static string pathOne = "";
+        public static string pathTwo = "";
+
+        
+        public static string connectionString = ConfigurationManager.ConnectionStrings["ConString"].ConnectionString;
+        
+
         static void Main(string[] args)
         {
             try
             {
-                if(File.Exists(pathOne))
+                GetConfigure();
+                pathOne = AddDateTime(pathOne);
+                if (File.Exists(pathOne))
                 {
                     File.Delete(pathOne);
                     File.Create(pathOne);
                 }
-                GetConfigure();
+                else
+                {
+                    File.Create(pathOne);
+                }
                 Serialize();
+                
                 //CreateTableQuery();
                 //InsertData();
-
+                FetchData();
             }
             catch (Exception ex)
             {
 
                 Console.WriteLine(ex);
             }
-            FetchData();
+            
+
             Console.ReadLine();
         }
 
         public static void GetConfigure()
         {
             pathOne = ConfigurationManager.AppSettings["XmlWrite"];
+            pathTwo = ConfigurationManager.AppSettings["XmlDbWrite"];
         }
 
+        public static SqlConnection GetConnection()
+        {
+            SqlConnection sqlConnection = new SqlConnection(connectionString);
+            return sqlConnection;
+        }
+        public static string AddDateTime(string path)
+        {
+            path = path + DateTime.Now.ToString("MM-dd-yyyy_hh-mm-ss-tt") + ".xml";
+            return path;
+        }
+
+        
         public static void Serialize()
         {
+            pathOne = AddDateTime(pathOne);
             EmployeeDetail employeeDetail = new EmployeeDetail();
             XmlSerializer xs = new XmlSerializer(typeof(List<EmployeeDetail>), new XmlRootAttribute("EmployeeDetails"));
             var employeeList = employeeDetail.GetEmployeeList();
@@ -55,8 +81,8 @@ namespace XmlDbDemo
 
         public static void CreateTableQuery()
         {
-            var connectionString = ConfigurationManager.ConnectionStrings["ConString"].ConnectionString;
-            SqlConnection sqlConnection = new SqlConnection(connectionString);
+
+            var sqlConnection = GetConnection();
             sqlConnection.Open();
 
             string employeeDetailTable = @"Create Table [EmployeeDetail] ( id int, employeeName char(50), age int)";
@@ -81,8 +107,8 @@ namespace XmlDbDemo
 
         public static void InsertData()
         {
-            var connectionString = ConfigurationManager.ConnectionStrings["ConString"].ConnectionString;
-            SqlConnection sqlConnection = new SqlConnection(connectionString);
+
+            var sqlConnection = GetConnection();
             sqlConnection.Open();
 
             DataSet ds = new DataSet();
@@ -133,14 +159,24 @@ namespace XmlDbDemo
 
         public static void FetchData()
         {
-            var connectionString = ConfigurationManager.ConnectionStrings["ConString"].ConnectionString;
-            SqlConnection sqlConnection = new SqlConnection(connectionString);
+            pathTwo = AddDateTime(pathTwo);
+
+            var sqlConnection = GetConnection();
             sqlConnection.Open();
 
-            var query = @"Select * from EmployeeDetail";
+            var query = @"select e.employeeName, a.HouseName, d.DepartmentId
+                            from EmployeeDetail e 
+                            join DepartmentDetail d
+                            on e.id = d.Id
+                            join AddressDetail a
+                            on d.Id = a.Id
+                            where d.DepartmentId = 10;";
+
             SqlDataAdapter sda = new SqlDataAdapter(query, sqlConnection);
-            DataTable dt = new DataTable();
-            sda.Fill(dt);
+            DataSet ds = new DataSet();
+            sda.Fill(ds);
+
+            ds.WriteXml(pathTwo, XmlWriteMode.IgnoreSchema);
 
         }
     }
