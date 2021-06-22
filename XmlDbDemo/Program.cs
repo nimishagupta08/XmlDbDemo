@@ -13,7 +13,7 @@ namespace XmlDbDemo
         public static string pathOne = "";
         public static string pathTwo = "";
 
-        
+
         public static string connectionString = ConfigurationManager.ConnectionStrings["ConString"].ConnectionString;
         
 
